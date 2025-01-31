@@ -52,7 +52,6 @@ class Session @SuppressLint("ApplySharedPref") constructor(
     // Session Variables
     var userId: String
         private set
-    private var eventIndex = 0
 
     @Volatile
     var backgroundIndex = 0
@@ -128,19 +127,21 @@ class Session @SuppressLint("ApplySharedPref") constructor(
     ): SelfDescribingJson? {
         Logger.v(TAG, "Getting session context...")
         if (isSessionCheckerEnabled) {
-            if (shouldUpdateSession()) {
+            if (shouldStartNewSession()) {
                 Logger.d(TAG, "Update session information.")
-                updateSession(eventId, eventTimestamp)
+                startNewSession(eventId, eventTimestamp)
                 if (isBackground) { // timed out in background
                     executeEventCallback(backgroundTimeoutCallback)
                 } else { // timed out in foreground
                     executeEventCallback(foregroundTimeoutCallback)
                 }
             }
-            lastSessionCheck = System.currentTimeMillis()
         }
-        eventIndex += 1
-        
+        state?.incrementEventIndex(isSessionCheckerEnabled)
+        state?.let {
+            storeSessionState(it)
+        }
+
         val state = state ?: run {
             Logger.v(TAG, "Session state not present")
             return null 
@@ -148,7 +149,6 @@ class Session @SuppressLint("ApplySharedPref") constructor(
         
         val sessionValues = state.sessionValues
         val sessionCopy: MutableMap<String, Any?> = HashMap(sessionValues)
-        sessionCopy[Parameters.SESSION_EVENT_INDEX] = eventIndex
         if (userAnonymisation) {
             sessionCopy[Parameters.SESSION_USER_ID] =
                 "00000000-0000-0000-0000-000000000000"
@@ -157,23 +157,26 @@ class Session @SuppressLint("ApplySharedPref") constructor(
         return SelfDescribingJson(TrackerConstants.SESSION_SCHEMA, sessionCopy)
     }
 
-    private fun shouldUpdateSession(): Boolean {
+    private fun shouldStartNewSession(): Boolean {
         if (isNewSession.get()) {
             return true
         }
-        val now = System.currentTimeMillis()
-        val timeout = if (isBackground) backgroundTimeout else foregroundTimeout
-        return now < lastSessionCheck || now - lastSessionCheck > timeout
+        state?.let {
+            val now = System.currentTimeMillis()
+            val timeout = if (isBackground) backgroundTimeout else foregroundTimeout
+            return now < it.lastUpdate || now - it.lastUpdate > timeout
+        }
+        return true
     }
 
     @Synchronized
-    private fun updateSession(eventId: String, eventTimestamp: Long) {
+    private fun startNewSession(eventId: String, eventTimestamp: Long) {
         isNewSession.set(false)
         val currentSessionId = Util.uUIDString()
         val eventTimestampDateTime = Util.getDateTimeFromTimestamp(eventTimestamp)
-        
+        val lastUpdate = System.currentTimeMillis()
         var sessionIndex = 1
-        eventIndex = 0
+        val eventIndex = 0
         var previousSessionId: String? = null
         var storage = "LOCAL_STORAGE"
         state?.let {
@@ -188,7 +191,9 @@ class Session @SuppressLint("ApplySharedPref") constructor(
             previousSessionId,
             sessionIndex,
             userId,
-            storage
+            storage,
+            eventIndex,
+            lastUpdate
         )
         state?.let {
             storeSessionState(it)

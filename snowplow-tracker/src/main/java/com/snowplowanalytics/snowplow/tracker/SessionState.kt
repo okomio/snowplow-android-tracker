@@ -28,7 +28,9 @@ class SessionState(
     val previousSessionId: String?,  //$ On iOS it has to be set nullable on constructor
     val sessionIndex: Int,
     val userId: String,
-    val storage: String
+    val storage: String,
+    var eventIndex: Int,
+    var lastUpdate: Long
 ) : State {
     private val sessionContext = HashMap<String, Any?>()
 
@@ -42,6 +44,8 @@ class SessionState(
         sessionContext[Parameters.SESSION_INDEX] = sessionIndex
         sessionContext[Parameters.SESSION_USER_ID] = userId
         sessionContext[Parameters.SESSION_STORAGE] = storage
+        sessionContext[Parameters.SESSION_EVENT_INDEX] = eventIndex
+        sessionContext[Parameters.SESSION_LAST_UPDATE] = lastUpdate
     }
 
     val sessionValues: Map<String, Any?>
@@ -79,8 +83,40 @@ class SessionState(
             value = storedState[Parameters.SESSION_STORAGE]
             if (value !is String) return null
             val storage = value
-            
-            return SessionState(firstEventId, firstEventTimestamp, sessionId, previousSessionId, sessionIndex, userId, storage)
+
+            value = storedState[Parameters.SESSION_EVENT_INDEX]
+            if (value !is Int)return null
+            val eventIndex = value
+
+            value = storedState[Parameters.SESSION_LAST_UPDATE]
+            if (value !is Long) return null
+            val lastUpdate = value
+
+            return SessionState(
+                firstEventId,
+                firstEventTimestamp,
+                sessionId,
+                previousSessionId,
+                sessionIndex,
+                userId,
+                storage,
+                eventIndex,
+                lastUpdate
+            )
+        }
+    }
+
+    /**
+     * Increments the "eventIndex" of the current session state (also updates the context map)
+     *
+     * @param isSessionCheckerEnabled when enabled, it also updates "lastUpdate" value
+     */
+    fun incrementEventIndex(isSessionCheckerEnabled: Boolean) {
+        eventIndex += 1
+        sessionContext[Parameters.SESSION_EVENT_INDEX] = eventIndex
+        if (isSessionCheckerEnabled) {
+            lastUpdate = System.currentTimeMillis()
+            sessionContext[Parameters.SESSION_LAST_UPDATE] = lastUpdate
         }
     }
 }
