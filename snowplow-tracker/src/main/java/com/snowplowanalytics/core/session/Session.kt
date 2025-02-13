@@ -46,6 +46,7 @@ class Session @SuppressLint("ApplySharedPref") constructor(
     foregroundTimeout: Long,
     backgroundTimeout: Long,
     timeUnit: TimeUnit,
+    isPersistentSession: Boolean,
     namespace: String?,
     context: Context
 ) {
@@ -75,6 +76,7 @@ class Session @SuppressLint("ApplySharedPref") constructor(
     
     var foregroundTimeout: Long
     var backgroundTimeout: Long
+    var isPersistentSession: Boolean
 
     // Callbacks
     private var foregroundTransitionCallback: Runnable? = null
@@ -89,8 +91,12 @@ class Session @SuppressLint("ApplySharedPref") constructor(
     init {
         this.foregroundTimeout = timeUnit.toMillis(foregroundTimeout)
         this.backgroundTimeout = timeUnit.toMillis(backgroundTimeout)
+        this.isPersistentSession = isPersistentSession
+
+        this.isNewSession.set(!isPersistentSession)
+
         isSessionCheckerEnabled = true
-        
+
         var sessionVarsName = TrackerConstants.SNOWPLOW_SESSION_VARS
         if (namespace != null && namespace.isNotEmpty()) {
             val sessionVarsSuffix = namespace.replace("[^a-zA-Z0-9_]+".toRegex(), "-")
@@ -135,11 +141,19 @@ class Session @SuppressLint("ApplySharedPref") constructor(
                 } else { // timed out in foreground
                     executeEventCallback(foregroundTimeoutCallback)
                 }
+                if (!isPersistentSession) {
+                    state?.let {
+                        storeSessionState(it)
+                    }
+                }
             }
         }
         state?.incrementEventIndex(isSessionCheckerEnabled)
-        state?.let {
-            storeSessionState(it)
+
+        if (isPersistentSession) {
+            state?.let {
+                storeSessionState(it)
+            }
         }
 
         val state = state ?: run {
@@ -147,7 +161,7 @@ class Session @SuppressLint("ApplySharedPref") constructor(
             return null 
         }
         
-        val sessionValues = state.sessionValues
+        val sessionValues = state.sessionValuesOrig
         val sessionCopy: MutableMap<String, Any?> = HashMap(sessionValues)
         if (userAnonymisation) {
             sessionCopy[Parameters.SESSION_USER_ID] =
@@ -327,11 +341,12 @@ class Session @SuppressLint("ApplySharedPref") constructor(
             foregroundTimeout: Long,
             backgroundTimeout: Long,
             timeUnit: TimeUnit,
+            isPersistentSession: Boolean,
             namespace: String?,
             sessionCallbacks: Array<Runnable?>?
         ): Session {
             val session =
-                Session(foregroundTimeout, backgroundTimeout, timeUnit, namespace, context)
+                Session(foregroundTimeout, backgroundTimeout, timeUnit, isPersistentSession, namespace, context)
             var callbacks: Array<Runnable?>? = arrayOf(null, null, null, null)
             if (sessionCallbacks != null && sessionCallbacks.size == 4) {
                 callbacks = sessionCallbacks

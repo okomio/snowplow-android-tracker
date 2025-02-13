@@ -51,6 +51,13 @@ class SessionState(
     val sessionValues: Map<String, Any?>
         get() = sessionContext
 
+    val sessionValuesOrig: Map<String, Any?>
+        get() {
+            val copy: MutableMap<String, Any?> = HashMap(sessionValues)
+            copy.remove(Parameters.SESSION_LAST_UPDATE)
+            return copy
+        }
+
     companion object {
         @JvmStatic
         fun build(storedState: Map<String?, Any?>): SessionState? {

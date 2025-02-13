@@ -277,6 +277,7 @@ class ServiceProvider(
             tracker.diagnosticAutotracking = trackerConfiguration.diagnosticAutotracking
             tracker.userAnonymisation = trackerConfiguration.userAnonymisation
             tracker.trackerVersionSuffix = trackerConfiguration.trackerVersionSuffix
+            tracker.isPersistentSession = trackerConfiguration.isPersistentSession
 
             gdprConfiguration.sourceConfig?.let { tracker.gdprContext = Gdpr(
                 basisForProcessing = it.basisForProcessing,

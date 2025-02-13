@@ -150,6 +150,11 @@ open class TrackerConfiguration : TrackerConfigurationInterface, Configuration {
         get() = _trackerVersionSuffix ?: sourceConfig?.trackerVersionSuffix
         set(value) { _trackerVersionSuffix = value }
 
+    private var _isPersistentSession: Boolean? = null
+    override var isPersistentSession: Boolean
+        get() = _isPersistentSession ?: sourceConfig?.isPersistentSession ?: TrackerDefaults.isPersistentSession
+        set(value) { _isPersistentSession = value }
+
     private var _platformContextProperties: List<PlatformContextProperty>? = null
     /**
      * List of properties of the platform context to track.
@@ -330,6 +335,11 @@ open class TrackerConfiguration : TrackerConfigurationInterface, Configuration {
         return this
     }
 
+    fun isPersistentSession(isPersistentSession: Boolean): TrackerConfiguration {
+        this.isPersistentSession = isPersistentSession
+        return this
+    }
+
     // Copyable
     override fun copy(): Configuration {
         return TrackerConfiguration(appId)
@@ -351,6 +361,7 @@ open class TrackerConfiguration : TrackerConfigurationInterface, Configuration {
             .userAnonymisation(userAnonymisation)
             .trackerVersionSuffix(trackerVersionSuffix)
             .platformContextProperties(platformContextProperties)
+            .isPersistentSession(isPersistentSession)
     }
 
     /**
@@ -400,6 +411,7 @@ open class TrackerConfiguration : TrackerConfigurationInterface, Configuration {
         if (jsonObject.has("exceptionAutotracking")) { _exceptionAutotracking = jsonObject.getBoolean("exceptionAutotracking") }
         if (jsonObject.has("diagnosticAutotracking")) { _diagnosticAutotracking = jsonObject.getBoolean("diagnosticAutotracking") }
         if (jsonObject.has("userAnonymisation")) { _userAnonymisation = jsonObject.getBoolean("userAnonymisation") }
+        if (jsonObject.has("isPersistentSession")) { _isPersistentSession = jsonObject.getBoolean("isPersistentSession") }
     }
 
     companion object {

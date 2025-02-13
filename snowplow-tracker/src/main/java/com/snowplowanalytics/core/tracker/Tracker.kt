@@ -126,6 +126,13 @@ class Tracker(
             }
         }
 
+    var isPersistentSession: Boolean = TrackerDefaults.isPersistentSession
+        set(value) {
+            if (!builderFinished) {
+                field = value
+            }
+        }
+
     /**
      * This configuration option is not published in the TrackerConfiguration class.
      * Create a Tracker directly, not via the Snowplow interface, to configure threadCount.
@@ -243,6 +250,7 @@ class Tracker(
                     foregroundTimeout,
                     backgroundTimeout,
                     timeUnit,
+                    isPersistentSession,
                     namespace,
                     callbacks
                 )
@@ -392,6 +400,7 @@ class Tracker(
                 foregroundTimeout,
                 backgroundTimeout,
                 timeUnit,
+                isPersistentSession,
                 namespace,
                 callbacks
             )

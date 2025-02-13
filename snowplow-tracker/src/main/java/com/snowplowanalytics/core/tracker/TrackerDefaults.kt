@@ -24,6 +24,7 @@ object TrackerDefaults {
     var backgroundTimeout: Long = 1800 // 30 minutes
     var threadCount = 10
     var timeUnit = TimeUnit.SECONDS
+    var isPersistentSession = false
     var sessionContext = true
     var geoLocationContext = false
     var platformContext = true

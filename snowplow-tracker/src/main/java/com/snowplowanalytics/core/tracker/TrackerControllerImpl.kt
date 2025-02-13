@@ -198,6 +198,13 @@ class TrackerControllerImpl  // Constructors
             tracker.userAnonymisation = userAnonymisation
         }
 
+    override var isPersistentSession: Boolean
+        get() = tracker.isPersistentSession
+        set(isPersistentSession) {
+            dirtyConfig.isPersistentSession = isPersistentSession
+            tracker.isPersistentSession = isPersistentSession
+        }
+
     // The trackerVersionSuffix shouldn't be updated.
     override var trackerVersionSuffix: String?
         get() = tracker.trackerVersionSuffix

@@ -115,4 +115,6 @@ interface TrackerConfigurationInterface {
      * @note Do not use. Internal use only.
      */
     var trackerVersionSuffix: String?
+
+    var isPersistentSession: Boolean
 }
