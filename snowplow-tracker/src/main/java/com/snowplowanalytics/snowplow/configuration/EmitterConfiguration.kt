@@ -87,6 +87,11 @@ open class EmitterConfiguration() : Configuration, EmitterConfigurationInterface
         get() = _serverAnonymisation ?: sourceConfig?.serverAnonymisation ?: EmitterDefaults.serverAnonymisation
         set(value) { _serverAnonymisation = value }
     
+    private var _enableContentEncoding: Boolean? = null
+    override var enableContentEncoding: Boolean
+        get() = _enableContentEncoding ?: sourceConfig?.enableContentEncoding ?: EmitterDefaults.enableContentEncoding
+        set(value) { _enableContentEncoding = value }
+
     // Builders
     
     /**
@@ -168,6 +173,11 @@ open class EmitterConfiguration() : Configuration, EmitterConfigurationInterface
         return this
     }
 
+    fun enableContentEncoding(enableContentEncoding: Boolean): EmitterConfiguration {
+        this.enableContentEncoding = enableContentEncoding
+        return this
+    }
+
     // Copyable
     override fun copy(): EmitterConfiguration {
         return EmitterConfiguration()
@@ -180,6 +190,7 @@ open class EmitterConfiguration() : Configuration, EmitterConfigurationInterface
             .requestCallback(requestCallback)
             .customRetryForStatusCodes(customRetryForStatusCodes)
             .serverAnonymisation(serverAnonymisation)
+            .enableContentEncoding(enableContentEncoding)
     }
 
     // JSON Formatter

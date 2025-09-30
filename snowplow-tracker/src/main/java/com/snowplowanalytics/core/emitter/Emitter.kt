@@ -159,6 +159,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                             .cookieJar(cookieJar)
                             .serverAnonymisation(serverAnonymisation)
                             .requestHeaders(requestHeaders)
+                            .enableContentEncoding(enableContentEncoding)
                             .build()
                     }
             }
@@ -185,6 +186,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                         .cookieJar(cookieJar)
                         .serverAnonymisation(serverAnonymisation)
                         .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
                         .build()
                 }
                 
@@ -228,6 +230,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                         .cookieJar(cookieJar)
                         .serverAnonymisation(serverAnonymisation)
                         .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
                         .build()
                 }
                 
@@ -267,6 +270,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                         .cookieJar(cookieJar)
                         .serverAnonymisation(serverAnonymisation)
                         .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
                         .build()
                 }
             }
@@ -289,6 +293,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                         .cookieJar(cookieJar)
                         .serverAnonymisation(serverAnonymisation)
                         .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
                         .build()
                 }
                 
@@ -325,6 +330,27 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                         .cookieJar(cookieJar)
                         .serverAnonymisation(serverAnonymisation)
                         .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
+                        .build()
+                }
+            }
+        }
+
+    var enableContentEncoding: Boolean = EmitterDefaults.enableContentEncoding
+        set(enableContentEncoding) {
+            field = enableContentEncoding
+            if (!isCustomNetworkConnection && builderFinished) {
+                networkConnection = emitTimeout?.let {
+                    OkHttpNetworkConnectionBuilder(uri, context)
+                        .method(httpMethod)
+                        .tls(tlsVersions)
+                        .emitTimeout(it)
+                        .customPostPath(customPostPath)
+                        .client(client)
+                        .cookieJar(cookieJar)
+                        .serverAnonymisation(serverAnonymisation)
+                        .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
                         .build()
                 }
             }
@@ -358,6 +384,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                         .cookieJar(cookieJar)
                         .serverAnonymisation(serverAnonymisation)
                         .requestHeaders(requestHeaders)
+                        .enableContentEncoding(enableContentEncoding)
                         .build()
                 }
             }
@@ -389,6 +416,7 @@ class Emitter(context: Context, collectorUri: String, builder: ((Emitter) -> Uni
                     .cookieJar(cookieJar)
                     .serverAnonymisation(serverAnonymisation)
                     .requestHeaders(requestHeaders)
+                    .enableContentEncoding(enableContentEncoding)
                     .build()
             }
         } else {

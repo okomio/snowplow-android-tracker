@@ -84,6 +84,13 @@ class EmitterControllerImpl(serviceProvider: ServiceProviderInterface) :
             emitter.serverAnonymisation = serverAnonymisation
         }
 
+    override var enableContentEncoding: Boolean
+        get() = emitter.enableContentEncoding
+        set(enableContentEncoding) {
+            dirtyConfig.enableContentEncoding = enableContentEncoding
+            emitter.enableContentEncoding = enableContentEncoding
+        }
+
     override val dbCount: Long
         get() {
             val eventStore = emitter.eventStore

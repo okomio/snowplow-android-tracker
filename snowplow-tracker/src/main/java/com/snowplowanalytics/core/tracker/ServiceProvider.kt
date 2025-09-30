@@ -243,6 +243,7 @@ class ServiceProvider(
             emitter.requestCallback = emitterConfiguration.requestCallback
             emitter.customRetryForStatusCodes = emitterConfiguration.customRetryForStatusCodes
             emitter.serverAnonymisation = emitterConfiguration.serverAnonymisation
+            emitter.enableContentEncoding = emitterConfiguration.enableContentEncoding
             emitter.requestHeaders = networkConfiguration.requestHeaders
         }
         

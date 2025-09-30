@@ -26,13 +26,19 @@ import com.snowplowanalytics.core.tracker.Logger
 import com.snowplowanalytics.snowplow.tracker.BuildConfig
 
 import okhttp3.CookieJar
+import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okio.BufferedSink
+import okio.buffer
+import okio.sink
 
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.*
+import java.util.zip.GZIPOutputStream
 
 /**
  * Components in charge to send events to the collector.
@@ -50,6 +56,7 @@ class OkHttpNetworkConnection private constructor(builder: OkHttpNetworkConnecti
     private val customPostPath: String?
     private val serverAnonymisation: Boolean
     private val requestHeaders: Map<String, String>?
+    private val enableContentEncoding: Boolean
     private var client: OkHttpClient? = null
     private val uriBuilder: Uri.Builder
     override val uri: Uri
@@ -71,6 +78,7 @@ class OkHttpNetworkConnection private constructor(builder: OkHttpNetworkConnecti
         var customPostPath: String? = null //Optional
         var serverAnonymisation = EmitterDefaults.serverAnonymisation // Optional
         var requestHeaders: Map<String, String>? = null // Optional
+        var enableContentEncoding = EmitterDefaults.enableContentEncoding
 
         /**
          * GET or POST.
@@ -177,6 +185,14 @@ class OkHttpNetworkConnection private constructor(builder: OkHttpNetworkConnecti
         }
 
         /**
+         * Whether to use gzip encoding for POST requests
+         */
+        fun enableContentEncoding(enableContentEncoding: Boolean): OkHttpNetworkConnectionBuilder {
+            this.enableContentEncoding = enableContentEncoding
+            return this
+        }
+
+        /**
          * Creates a new OkHttpNetworkConnection
          *
          * @return a new OkHttpNetworkConnection object
@@ -209,6 +225,7 @@ class OkHttpNetworkConnection private constructor(builder: OkHttpNetworkConnecti
         customPostPath = builder.customPostPath
         serverAnonymisation = builder.serverAnonymisation
         requestHeaders = builder.requestHeaders
+        enableContentEncoding = builder.enableContentEncoding
         
         val tlsArguments = TLSArguments(builder.tlsVersions)
         uriBuilder = Uri.parse(networkUri).buildUpon()
@@ -327,11 +344,18 @@ class OkHttpNetworkConnection private constructor(builder: OkHttpNetworkConnecti
     private fun buildPostRequest(request: Request, userAgent: String): okhttp3.Request {
         val reqUrl = uriBuilder.build().toString()
         val reqBody = request.payload.toString().toRequestBody(JSON)
-        
         val builder = okhttp3.Request.Builder()
             .url(reqUrl)
             .header("User-Agent", userAgent)
-            .post(reqBody)
+
+        if (enableContentEncoding) {
+            builder
+                .post(reqBody.gzip())
+                .header("Content-Encoding", "gzip")
+        } else {
+            builder.post(reqBody)
+        }
+
         if (serverAnonymisation) {
             builder.header("SP-Anonymous", "*")
         }
@@ -373,6 +397,23 @@ class OkHttpNetworkConnection private constructor(builder: OkHttpNetworkConnecti
         } catch (e: IOException) {
             Logger.e(TAG, "Request sending failed: %s", e.toString())
             -1
+        }
+    }
+
+    private fun RequestBody.gzip(): RequestBody {
+        return object : RequestBody() {
+            override fun contentType(): MediaType? = this@gzip.contentType()
+
+            override fun contentLength(): Long = -1
+
+            @Throws(IOException::class)
+            override fun writeTo(sink: BufferedSink) {
+                val gzipOutput = GZIPOutputStream(sink.outputStream())
+                val bufferedSink = gzipOutput.sink().buffer()
+                this@gzip.writeTo(bufferedSink)
+                bufferedSink.close()
+                gzipOutput.finish()
+            }
         }
     }
 
